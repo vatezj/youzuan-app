@@ -1,73 +1,105 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_demo/core/router/route_helper_static.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_demo/pages/user/publish_task_view_model.dart';
+import 'package:flutter_demo/pages/user/widgets/form_field_widget.dart';
+import 'package:flutter_demo/pages/user/widgets/input_field_widget.dart';
+import 'package:flutter_demo/pages/user/widgets/selector_widget.dart';
+import 'package:flutter_demo/pages/user/widgets/task_steps_widget.dart';
+import 'package:flutter_demo/pages/user/widgets/upload_verification_widget.dart';
+import 'package:flutter_demo/pages/user/widgets/card_container_widget.dart';
 
-class PublishTaskPage extends StatefulWidget {
+class PublishTaskPage extends HookConsumerWidget {
   const PublishTaskPage({Key? key}) : super(key: key);
 
   @override
-  State<PublishTaskPage> createState() => _PublishTaskPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final publishTaskState = ref.watch(publishTaskPageStateProvider);
+    final publishTaskViewModel = ref.read(publishTaskViewModelProvider);
 
-class _PublishTaskPageState extends State<PublishTaskPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _labelController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _quantityController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _stepDescriptionController = TextEditingController();
-  final _websiteController = TextEditingController();
-  final _uploadDescriptionController = TextEditingController();
+    // 使用 Hooks 管理 TextEditingController
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final titleController =
+        useTextEditingController(text: publishTaskState.title);
+    final labelController =
+        useTextEditingController(text: publishTaskState.label);
+    final priceController =
+        useTextEditingController(text: publishTaskState.price);
+    final quantityController =
+        useTextEditingController(text: publishTaskState.quantity);
+    final descriptionController =
+        useTextEditingController(text: publishTaskState.description);
+    final websiteController =
+        useTextEditingController(text: publishTaskState.website);
 
-  String selectedCategory = '简单帮忙';
-  String selectedTimeLimit = '交单限时';
-  String selectedReviewTime = '1天';
-  String selectedDevice = '全部';
-  String selectedRegion = '全部';
-  String selectedFrequency = '每人一次';
-  bool saveAsTemplate = false;
-  bool agreeToTerms = false;
+    // 监听状态变化，更新控制器
+    useEffect(() {
+      titleController.text = publishTaskState.title;
+      return null;
+    }, [publishTaskState.title]);
 
-  final List<String> categories = ['简单帮忙', '电商回收', '游戏试玩', '注册下载', '其他'];
-  final List<String> timeLimits = ['交单限时', '1小时', '3小时', '6小时', '12小时', '1天', '3天'];
-  final List<String> reviewTimes = ['1天', '2天', '3天', '7天'];
-  final List<String> devices = ['全部', '安卓', '苹果'];
-  final List<String> regions = ['全部', '指定'];
-  final List<String> frequencies = ['每人一次', '每日一次', '每人三次', '店铺一次'];
+    useEffect(() {
+      labelController.text = publishTaskState.label;
+      return null;
+    }, [publishTaskState.label]);
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _labelController.dispose();
-    _priceController.dispose();
-    _quantityController.dispose();
-    _descriptionController.dispose();
-    _stepDescriptionController.dispose();
-    _websiteController.dispose();
-    _uploadDescriptionController.dispose();
-    super.dispose();
-  }
+    useEffect(() {
+      priceController.text = publishTaskState.price;
+      return null;
+    }, [publishTaskState.price]);
 
-  @override
-  Widget build(BuildContext context) {
+    useEffect(() {
+      quantityController.text = publishTaskState.quantity;
+      return null;
+    }, [publishTaskState.quantity]);
+
+    useEffect(() {
+      descriptionController.text = publishTaskState.description;
+      return null;
+    }, [publishTaskState.description]);
+
+    useEffect(() {
+      websiteController.text = publishTaskState.website;
+      return null;
+    }, [publishTaskState.website]);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           Expanded(
             child: Form(
-              key: _formKey,
+              key: formKey,
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _buildTaskInfoSection(),
-                    _buildTaskDescriptionSection(),
-                    _buildTaskStepsSection(),
-                    _buildUploadVerificationSection(),
-                    _buildTermsSection(),
-                    _buildSubmitButton(),
-                    const SizedBox(height: 20),
+                    _buildTaskInfoSection(
+                        context,
+                        publishTaskState,
+                        publishTaskViewModel,
+                        titleController,
+                        labelController,
+                        priceController,
+                        quantityController),
+                    _buildTaskDescriptionSection(context, publishTaskState,
+                        publishTaskViewModel, descriptionController),
+                    TaskStepsWidget(
+                      state: publishTaskState,
+                      viewModel: publishTaskViewModel,
+                      websiteController: websiteController,
+                    ),
+                    UploadVerificationWidget(
+                      state: publishTaskState,
+                      viewModel: publishTaskViewModel,
+                    ),
+                    _buildTermsSection(
+                        context, publishTaskState, publishTaskViewModel),
+                    _buildSubmitButton(
+                        context, publishTaskState, publishTaskViewModel),
+                    const SizedBox(height: 12),
                   ],
                 ),
               ),
@@ -78,54 +110,134 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       height: 100,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [
-            Color(0xFF4FC3F7),
-            Color(0xFF29B6F6),
+            Color(0xFF667eea),
+            Color(0xFF764ba2),
+            Color(0xFFf093fb),
           ],
+          stops: [0.0, 0.5, 1.0],
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF667eea).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Column(
             children: [
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    '发布任务',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => RouteHelperStatic.navigateBack(),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                   ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  // Navigate to my store
-                },
-                child: const Text(
-                  '我的店铺',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        '发布任务',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black26,
+                              offset: Offset(0, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
+                  GestureDetector(
+                    onTap: () {
+                      // Navigate to my store
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.store,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.lightbulb_outline,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '创建您的专属任务，让更多人参与',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -135,83 +247,90 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
     );
   }
 
-  Widget _buildTaskInfoSection() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+  Widget _buildTaskInfoSection(
+      BuildContext context,
+      PublishTaskPageState state,
+      PublishTaskViewModel viewModel,
+      TextEditingController titleController,
+      TextEditingController labelController,
+      TextEditingController priceController,
+      TextEditingController quantityController) {
+    return CardContainerWidget(
+      title: '任务信息',
+      titleIcon: Icons.assignment_outlined,
+      titleTrailing: Container(
+        decoration: BoxDecoration(
+          color: state.saveAsTemplate
+              ? const Color(0xFF667eea).withOpacity(0.1)
+              : Colors.grey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Checkbox(
+              value: state.saveAsTemplate,
+              onChanged: (value) {
+                viewModel.toggleSaveAsTemplate();
+              },
+              activeColor: const Color(0xFF667eea),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const Text(
+              '保存模版',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () {
+                // Show template selection
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF667eea).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  '模版',
+                  style: TextStyle(
+                    color: Color(0xFF667eea),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.assignment, color: Colors.green),
-              const SizedBox(width: 8),
-              const Text(
-                '任务信息',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              Row(
-                children: [
-                  Checkbox(
-                    value: saveAsTemplate,
-                    onChanged: (value) {
-                      setState(() {
-                        saveAsTemplate = value ?? false;
-                      });
-                    },
-                  ),
-                  const Text('保存模版'),
-                  const SizedBox(width: 8),
-                  TextButton(
-                    onPressed: () {
-                      // Show template selection
-                    },
-                    child: const Text('选择模版'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildFormField(
+          FormFieldWidget(
             label: '分类',
-            child: DropdownButtonFormField<String>(
-              value: selectedCategory,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              items: categories.map((category) {
-                return DropdownMenuItem(
-                  value: category,
-                  child: Text(category),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedCategory = value!;
-                });
-              },
+            child: BottomSheetSelectorWidget(
+              title: '分类',
+              currentValue: state.category,
+              options: PublishTaskViewModel.categories,
+              onSelected: (value) => viewModel.updateCategory(value),
+              icon: Icons.category_outlined,
             ),
           ),
-          _buildFormField(
+          FormFieldWidget(
             label: '标题',
-            child: TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                hintText: '项目核心标题，12字内',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
+            child: InputFieldWidget(
+              controller: titleController,
+              hintText: '项目核心标题，12字内',
+              icon: Icons.title,
+              errorText: state.validationErrors['title'],
               maxLength: 12,
+              onChanged: (value) => viewModel.updateTitle(value),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return '请输入任务标题';
@@ -220,69 +339,96 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
               },
             ),
           ),
-          _buildFormField(
+          FormFieldWidget(
             label: '标签',
-            child: TextFormField(
-              controller: _labelController,
-              decoration: const InputDecoration(
-                hintText: '推广的应用名字',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
+            child: InputFieldWidget(
+              controller: labelController,
+              hintText: '推广的应用名字',
+              icon: Icons.label_outline,
+              onChanged: (value) => viewModel.updateLabel(value),
             ),
           ),
-          _buildFormField(
+          FormFieldWidget(
             label: '单价',
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _priceController,
-                    decoration: const InputDecoration(
-                      hintText: '0.20元起',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                    ],
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '请输入单价';
-                      }
-                      final price = double.tryParse(value);
-                      if (price == null || price < 0.20) {
-                        return '单价不能低于0.20元';
-                      }
-                      return null;
-                    },
-                  ),
+                InputFieldWithUnitWidget(
+                  controller: priceController,
+                  hintText: '0.20元起',
+                  icon: Icons.attach_money,
+                  unit: '元',
+                  errorText: state.validationErrors['price'],
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d+\.?\d{0,2}')),
+                  ],
+                  onChanged: (value) => viewModel.updatePrice(value),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return '请输入单价';
+                    }
+                    final price = double.tryParse(value);
+                    if (price == null || price < 0.20) {
+                      return '单价不能低于0.20元';
+                    }
+                    return null;
+                  },
                 ),
-                const SizedBox(width: 8),
-                const Text('元'),
-                const SizedBox(width: 8),
-                const Text(
-                  '支持两位小数',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.red,
+                const SizedBox(height: 12),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.orange.withOpacity(0.1),
+                        Colors.orange.withOpacity(0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.orange.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.orange.shade600,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '支持两位小数',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          _buildFormField(
+          FormFieldWidget(
             label: '数量',
-            child: TextFormField(
-              controller: _quantityController,
-              decoration: const InputDecoration(
-                hintText: '最少30单',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
+            child: InputFieldWithUnitWidget(
+              controller: quantityController,
+              hintText: '最少30单',
+              icon: Icons.numbers,
+              unit: '单',
+              errorText: state.validationErrors['quantity'],
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onChanged: (value) => viewModel.updateQuantity(value),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return '请输入数量';
@@ -295,168 +441,98 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
               },
             ),
           ),
-          _buildFormField(
+          FormFieldWidget(
             label: '限时',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DropdownButtonFormField<String>(
-                  value: selectedTimeLimit,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: timeLimits.map((time) {
-                    return DropdownMenuItem(
-                      value: time,
-                      child: Text(time),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedTimeLimit = value!;
-                    });
-                  },
+                BottomSheetSelectorWidget(
+                  title: '限时',
+                  currentValue: state.timeLimit,
+                  options: PublishTaskViewModel.timeLimits,
+                  onSelected: (value) => viewModel.updateTimeLimit(value),
+                  icon: Icons.access_time,
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  '用户交单时间\n超时未交单释放名额',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.red,
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    '用户交单时间\n超时未交单释放名额',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.red,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          _buildFormField(
+          FormFieldWidget(
             label: '审核',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DropdownButtonFormField<String>(
-                  value: selectedReviewTime,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: reviewTimes.map((time) {
-                    return DropdownMenuItem(
-                      value: time,
-                      child: Text(time),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedReviewTime = value!;
-                    });
-                  },
+                BottomSheetSelectorWidget(
+                  title: '审核时间',
+                  currentValue: state.reviewTime,
+                  options: PublishTaskViewModel.reviewTimes,
+                  onSelected: (value) => viewModel.updateReviewTime(value),
+                  icon: Icons.verified_user,
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  '任务审核时间\n超时系统自动审核',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.red,
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    '任务审核时间\n超时系统自动审核',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.red,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          _buildFormField(
+          FormFieldWidget(
             label: '设备',
-            child: Row(
-              children: devices.map((device) {
-                final isSelected = selectedDevice == device;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedDevice = device;
-                      });
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.blue : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Center(
-                        child: Text(
-                          device,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+            child: RadioButtonGroupWidget(
+              label: '设备',
+              currentValue: state.device,
+              options: PublishTaskViewModel.devices,
+              onChanged: (value) => viewModel.updateDevice(value),
+              isHorizontal: true,
             ),
           ),
-          _buildFormField(
+          FormFieldWidget(
             label: '地区',
-            child: Row(
-              children: regions.map((region) {
-                final isSelected = selectedRegion == region;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedRegion = region;
-                      });
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.blue : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Center(
-                        child: Text(
-                          region,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+            child: RadioButtonGroupWidget(
+              label: '地区',
+              currentValue: state.region,
+              options: PublishTaskViewModel.regions,
+              onChanged: (value) => viewModel.updateRegion(value),
+              isHorizontal: true,
             ),
           ),
-          _buildFormField(
+          FormFieldWidget(
             label: '限次',
-            child: Wrap(
-              spacing: 8,
-              children: frequencies.map((frequency) {
-                final isSelected = selectedFrequency == frequency;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedFrequency = frequency;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.blue : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      frequency,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+            child: RadioButtonGroupWidget(
+              label: '限次',
+              currentValue: state.frequency,
+              options: PublishTaskViewModel.frequencies,
+              onChanged: (value) => viewModel.updateFrequency(value),
+              isHorizontal: false,
             ),
           ),
         ],
@@ -464,13 +540,17 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
     );
   }
 
-  Widget _buildTaskDescriptionSection() {
+  Widget _buildTaskDescriptionSection(
+      BuildContext context,
+      PublishTaskPageState state,
+      PublishTaskViewModel viewModel,
+      TextEditingController descriptionController) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -488,16 +568,20 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           TextFormField(
-            controller: _descriptionController,
-            decoration: const InputDecoration(
+            controller: descriptionController,
+            decoration: InputDecoration(
               hintText: '一句话简单描述任务要求（限制50字）',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.all(12),
+              border: const OutlineInputBorder(),
+              contentPadding: const EdgeInsets.all(12),
+              errorText: state.validationErrors['description'],
             ),
             maxLines: 3,
             maxLength: 50,
+            onChanged: (value) {
+              viewModel.updateDescription(value);
+            },
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return '请输入任务说明';
@@ -510,204 +594,14 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
     );
   }
 
-  Widget _buildTaskStepsSection() {
+  Widget _buildTermsSection(BuildContext context, PublishTaskPageState state,
+      PublishTaskViewModel viewModel) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.list_alt, color: Colors.green),
-              const SizedBox(width: 8),
-              const Text(
-                '任务步骤',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: () {
-                  // Add image step
-                },
-                child: const Text('增加图文步骤'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: () {
-                  // Add website step
-                },
-                child: const Text('增加网址步骤'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '1',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _stepDescriptionController,
-                    decoration: const InputDecoration(
-                      hintText: '请输入步骤说明（限制60字）',
-                      border: InputBorder.none,
-                    ),
-                    maxLength: 60,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    // Delete step
-                    _stepDescriptionController.clear();
-                  },
-                  child: const Text('删除'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _websiteController,
-            decoration: const InputDecoration(
-              hintText: '请输入网站网址',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUploadVerificationSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.upload, color: Colors.green),
-              const SizedBox(width: 8),
-              const Text(
-                '上传验证',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: () {
-                  // Add collection image
-                },
-                child: const Text('增加收集截图'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: () {
-                  // Add collection info
-                },
-                child: const Text('增加收集信息'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '1',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _uploadDescriptionController,
-                    decoration: const InputDecoration(
-                      hintText: '请输入上传说明（限制30字）',
-                      border: InputBorder.none,
-                    ),
-                    maxLength: 30,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    // Delete upload requirement
-                    _uploadDescriptionController.clear();
-                  },
-                  child: const Text('删除'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTermsSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -715,11 +609,9 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
           Row(
             children: [
               Checkbox(
-                value: agreeToTerms,
+                value: state.agreeToTerms,
                 onChanged: (value) {
-                  setState(() {
-                    agreeToTerms = value ?? false;
-                  });
+                  viewModel.toggleAgreeToTerms();
                 },
               ),
               const Text('我已阅读、理解并同意'),
@@ -744,7 +636,7 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
               fontSize: 12,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
             '提示：平台禁止发布黄赌毒、诈骗及涉政等一切法律禁止之内容，另禁止发布与平台同性质的软件、app或网站，违者将冻结账户，谢谢！',
             style: TextStyle(
@@ -757,60 +649,128 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton(BuildContext context, PublishTaskPageState state,
+      PublishTaskViewModel viewModel) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.all(16),
-      child: ElevatedButton(
-        onPressed: _submitTask,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.grey,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          gradient: state.isFormValid && !state.isSubmitting
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF667eea),
+                    Color(0xFF764ba2),
+                    Color(0xFFf093fb),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                )
+              : null,
+          color: state.isFormValid && !state.isSubmitting
+              ? null
+              : Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: state.isFormValid && !state.isSubmitting
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF667eea).withOpacity(0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFF764ba2).withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
-        child: const Text(
-          '请输入标题',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFormField({required String label, required Widget child}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 60,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+        child: ElevatedButton(
+          onPressed: state.isSubmitting
+              ? null
+              : () => _submitTask(context, state, viewModel),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(child: child),
-        ],
+          child: state.isSubmitting
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Text(
+                      '提交中...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.rocket_launch,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      state.submitButtonText,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black26,
+                            offset: Offset(0, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }
 
-  void _submitTask() {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    if (!agreeToTerms) {
+  Future<void> _submitTask(BuildContext context, PublishTaskPageState state,
+      PublishTaskViewModel viewModel) async {
+    if (!state.agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('请先同意发布规则'),
@@ -820,34 +780,25 @@ class _PublishTaskPageState extends State<PublishTaskPage> {
       return;
     }
 
-    // Collect all form data
-    final taskData = {
-      'category': selectedCategory,
-      'title': _titleController.text,
-      'label': _labelController.text,
-      'price': double.tryParse(_priceController.text) ?? 0.0,
-      'quantity': int.tryParse(_quantityController.text) ?? 0,
-      'timeLimit': selectedTimeLimit,
-      'reviewTime': selectedReviewTime,
-      'device': selectedDevice,
-      'region': selectedRegion,
-      'frequency': selectedFrequency,
-      'description': _descriptionController.text,
-      'stepDescription': _stepDescriptionController.text,
-      'website': _websiteController.text,
-      'uploadDescription': _uploadDescriptionController.text,
-      'saveAsTemplate': saveAsTemplate,
-    };
+    await viewModel.submitTask();
 
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('任务发布成功，等待审核'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    // Navigate back or to task list
-    Navigator.of(context).pop();
+    if (context.mounted) {
+      if (state.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.errorMessage!),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('任务发布成功，等待审核'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    }
   }
 }

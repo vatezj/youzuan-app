@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_demo/core/router/route_helper_static.dart';
+import 'package:flutter_demo/pages/user/publish_task_page.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_demo/pages/my/my_page_view_model.dart';
@@ -544,7 +546,6 @@ class MyPage extends HookConsumerWidget {
   }
 
   Widget _buildMenuItems(MyPageState myState, MyPageViewModel myViewModel) {
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -557,7 +558,9 @@ class MyPage extends HookConsumerWidget {
           icon: item.icon,
           hasNotification: item.hasNotification,
           notificationText: item.notificationText,
-          onTap: () => myViewModel.handleMenuItemTap(item.title),
+          onTap: () async => {
+            await RouteHelperStatic.navigateToNonTab(PublishTaskPage)
+          },
         )).toList(),
       ),
     );

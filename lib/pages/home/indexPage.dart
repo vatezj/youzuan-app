@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_demo/core/router/context_extension.dart';
+import 'package:flutter_demo/pages/task/taskdetailPage.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_demo/pages/home/task_view_model.dart';
@@ -74,7 +76,8 @@ class IndexPage extends HookConsumerWidget {
     // Tab 页面生命周期管理
     useEffect(() {
       // 注册 Tab 页面回调
-      TabViewModel.registerPageCallbacks('IndexPage',
+      TabViewModel.registerPageCallbacks(
+        'IndexPage',
         onPageShow: () {
           print('-------------------------首页 Tab onPageShow (从其他Tab切换过来)');
           // Tab 页面显示时的逻辑
@@ -84,7 +87,7 @@ class IndexPage extends HookConsumerWidget {
           // Tab 页面隐藏时的逻辑
         },
       );
-      
+
       return () {
         TabViewModel.unregisterPageCallbacks('IndexPage');
       };
@@ -98,7 +101,6 @@ class IndexPage extends HookConsumerWidget {
       };
     }, []);
 
-
     return Scaffold(
       body: Column(
         children: [
@@ -109,7 +111,7 @@ class IndexPage extends HookConsumerWidget {
                 children: [
                   _buildActionButtons(taskState, taskViewModel),
                   _buildSprintPrize(),
-                  _buildRecommendedTasks(taskState, taskViewModel),
+                  _buildRecommendedTasks(context, taskState, taskViewModel),
                 ],
               ),
             ),
@@ -174,7 +176,8 @@ class IndexPage extends HookConsumerWidget {
     );
   }
 
-  Widget _buildActionButtons(TaskPageState taskState, TaskViewModel taskViewModel) {
+  Widget _buildActionButtons(
+      TaskPageState taskState, TaskViewModel taskViewModel) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -247,7 +250,8 @@ class IndexPage extends HookConsumerWidget {
     );
   }
 
-  Widget _buildTimerButton(TaskPageState taskState, TaskViewModel taskViewModel) {
+  Widget _buildTimerButton(
+      TaskPageState taskState, TaskViewModel taskViewModel) {
     return GestureDetector(
       onTap: () => taskViewModel.toggleTimer(),
       child: Column(
@@ -359,7 +363,8 @@ class IndexPage extends HookConsumerWidget {
     );
   }
 
-  Widget _buildRecommendedTasks(TaskPageState taskState, TaskViewModel taskViewModel) {
+  Widget _buildRecommendedTasks(
+      BuildContext context, TaskPageState taskState, TaskViewModel taskViewModel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -395,14 +400,15 @@ class IndexPage extends HookConsumerWidget {
           )
         else
           ...taskState.recommendedTasks.map((task) => _buildTaskItem(
-            task,
-            taskViewModel,
-          )),
+                context,
+                task,
+                taskViewModel,
+              )),
       ],
     );
   }
 
-  Widget _buildTaskItem(TaskItem task, TaskViewModel taskViewModel) {
+  Widget _buildTaskItem( BuildContext context, TaskItem task, TaskViewModel taskViewModel) {
     // 根据颜色字符串获取Color对象
     Color getAvatarColor(String colorString) {
       switch (colorString) {
@@ -419,72 +425,78 @@ class IndexPage extends HookConsumerWidget {
       }
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 25,
-            backgroundColor: getAvatarColor(task.avatarColor),
-            child: const Icon(
-              Icons.task_alt,
-              color: Colors.white,
+    return GestureDetector(
+      onTap: () {
+        context.navigateToNonTab(TaskDetailPage);
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  task.subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: task.tags.map((tag) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      tag,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.blue.shade700,
-                      ),
-                    ),
-                  )).toList(),
-                ),
-              ],
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: getAvatarColor(task.avatarColor),
+              child: const Icon(
+                Icons.task_alt,
+                color: Colors.white,
+              ),
             ),
-          ),
-          if (task.reward.isNotEmpty)
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    task.subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: task.tags
+                        .map((tag) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
             Text(
               task.reward,
               style: const TextStyle(
@@ -493,26 +505,8 @@ class IndexPage extends HookConsumerWidget {
                 color: Colors.orange,
               ),
             ),
-          if (task.hasEarnButton)
-            GestureDetector(
-              onTap: () => taskViewModel.completeTask(task.id),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Text(
-                  '立即赚钱',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_demo/core/mvvm/auth_view_model.dart';
+import 'package:flutter_demo/core/router/route_helper_static.dart';
 import 'package:flutter_demo/pages/login/loginPage.dart';
 import 'package:flutter_demo/pages/BottomMenuBarPage.dart';
 
@@ -38,6 +39,16 @@ class SplashPage extends HookConsumerWidget {
     // 启动动画
     useEffect(() {
       animationController.forward();
+      
+      // 测试静态路由帮助类
+      Future.delayed(const Duration(seconds: 1), () {
+        print('=== SplashPage 中测试静态路由帮助类 ===');
+        print('Navigator 可用: ${RouteHelperStatic.isNavigatorAvailable}');
+        print('当前页面: ${RouteHelperStatic.getCurrentRouteName()}');
+        print('页面栈深度: ${RouteHelperStatic.getStackDepth()}');
+        print('=====================================');
+      });
+      
       return null;
     }, []);
 

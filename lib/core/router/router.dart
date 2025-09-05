@@ -12,6 +12,8 @@ import 'package:flutter_demo/pages/my/myPage.dart';
 import 'package:flutter_demo/pages/BottomMenuBarPage.dart';
 import 'package:flutter_demo/core/router/route_helper.dart';
 import 'package:flutter_demo/core/router/middleware.dart';
+import 'package:flutter_demo/pages/task/TaskDetailPage.dart';
+import 'package:flutter_demo/pages/user/publish_task_page.dart';
 
 const Type _HOME_ = IndexPage;
 
@@ -25,6 +27,11 @@ final _routes = RouteHelper.routeDefine({
   InfoPage: (_) => InfoPage(),
   TestPage: (_) => TestPage(),
   BottomMenuBarPage: (_) => BottomMenuBarPage(),
+
+  TaskDetailPage:(_)=>TaskDetailPage(),
+
+  PublishTaskPage:(_)=> PublishTaskPage()
+
 });
 
 /// 路由管理核心类 - 单例模式

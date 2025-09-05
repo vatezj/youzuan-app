@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_demo/core/router/app_router.dart';
+import 'package:flutter_demo/core/router/route_helper_static.dart';
 import 'package:flutter_demo/core/config/app_config.dart';
 import 'package:flutter_demo/core/init/app_init.dart';
 import 'package:flutter_demo/l10n/gen/app_localizations.dart';
@@ -24,6 +25,9 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 创建全局 Navigator Key
+    final navigatorKey = GlobalKey<NavigatorState>();
+    
     return MaterialApp(
       title: AppConfig.appName,
       theme: AppConfig.lightTheme,
@@ -42,6 +46,16 @@ class MyApp extends ConsumerWidget {
       navigatorObservers: [RouteObserver<ModalRoute<dynamic>>()],
       
       debugShowCheckedModeBanner: false,
+      
+      // 设置全局 Navigator Key
+      navigatorKey: navigatorKey,
+      
+      // 设置全局 Navigator Key 用于静态路由帮助类
+      builder: (context, child) {
+        // 设置全局 Navigator Key
+        RouteHelperStatic.setNavigatorKey(navigatorKey);
+        return child!;
+      },
     );
   }
 }
